@@ -32,6 +32,11 @@ class MappingTransformer(BaseEstimator, TransformerMixin):
     X_ = X.copy()
     X_[self.mapping_column].replace(self.mapping_dict, inplace=True)
     return X_
+  
+  def fit_transform(self, X, y = None):
+    result = self.transform(X)
+    return result
+
 
 class RenamingTransformer(BaseEstimator, TransformerMixin):
 
