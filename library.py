@@ -33,39 +33,6 @@ class MappingTransformer(BaseEstimator, TransformerMixin):
     X_[self.mapping_column].replace(self.mapping_dict, inplace=True)
     return X_
 
-class PearsonTransformer(BaseEstimator, TransformerMixin): 
-  def __init__(self, threshold):
-    assert isinstance(threshold, float), f'{self.__class__.__name__} constructor expected float but got {type(threshold)} instead.'
-    self.threshold = threshold
-
-  def fit(self, X, y = None):
-    print(f"\nWarning: {self.__class__.__name__}.fit does nothing.\n")
-    return X
-
-  def transform(self, X):
-    assert isinstance(X, pd.core.frame.DataFrame), f'{self.__class__.__name__}.transform expected Dataframe but got {type(X)} instead.'
-
-    df_corr = X.corr(method='pearson')
-
-    abs_df = df_corr.mask(df_corr[df_corr.columns].abs() > self.threshold, True)
-    masked_df = abs_df.mask(abs_df <= self.threshold, False)
-
-    upper_mask = np.triu(masked_df, k=1)
-    upper_mask[np.where(upper_mask==0)]=False
-
-    correlated_columns = [i[1] for i in enumerate(masked_df.columns) if True in upper_mask[:, i[0]]]
-
-    new_df = transformed_df.drop(columns=correlated_columns)
-
-    return new_df
-
-  def fit_transform(self, X, y = None):
-    result = self.transform(X)
-    return result
-  def fit_transform(self, X, y = None):
-    result = self.transform(X)
-    return result
-  
 class RenamingTransformer(BaseEstimator, TransformerMixin):
   
     def __init__(self, mapping_dict:dict):
@@ -157,3 +124,38 @@ class DropColumnsTransformer(BaseEstimator, TransformerMixin):
   def fit_transform(self, X, y = None):
     result = self.transform(X)
     return result
+
+  
+class PearsonTransformer(BaseEstimator, TransformerMixin): 
+  def __init__(self, threshold):
+    assert isinstance(threshold, float), f'{self.__class__.__name__} constructor expected float but got {type(threshold)} instead.'
+    self.threshold = threshold
+
+  def fit(self, X, y = None):
+    print(f"\nWarning: {self.__class__.__name__}.fit does nothing.\n")
+    return X
+
+  def transform(self, X):
+    assert isinstance(X, pd.core.frame.DataFrame), f'{self.__class__.__name__}.transform expected Dataframe but got {type(X)} instead.'
+
+    df_corr = X.corr(method='pearson')
+
+    abs_df = df_corr.mask(df_corr[df_corr.columns].abs() > self.threshold, True)
+    masked_df = abs_df.mask(abs_df <= self.threshold, False)
+
+    upper_mask = np.triu(masked_df, k=1)
+    upper_mask[np.where(upper_mask==0)]=False
+
+    correlated_columns = [i[1] for i in enumerate(masked_df.columns) if True in upper_mask[:, i[0]]]
+
+    new_df = transformed_df.drop(columns=correlated_columns)
+
+    return new_df
+
+  def fit_transform(self, X, y = None):
+    result = self.transform(X)
+    return result
+  def fit_transform(self, X, y = None):
+    result = self.transform(X)
+    return result
+  
