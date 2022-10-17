@@ -192,3 +192,51 @@ class Sigma3Transformer(BaseEstimator, TransformerMixin):
   def fit_transform(self, X, y = None):
     result = self.transform(X)
     return result
+
+  
+class TukeyTransformer(BaseEstimator, TransformerMixin):
+  def __init__(self, column_name, fence):
+    assert isinstance(column_name, str), f'{self.__class__.__name__} constructor expected string but got {type(column_name)} instead.'
+    assert isinstance(fence, str), f'{self.__class__.__name__} constructor expected string but got {type(fence)} instead.'
+    self.column_name = column_name
+    self.fence = fence
+
+  def fit(self, X, y = None):
+    print(f"\nWarning: {self.__class__.__name__}.fit does nothing.\n")
+    return X
+
+  def transform(self, X):
+    assert isinstance(X, pd.core.frame.DataFrame), f'{self.__class__.__name__}.transform expected Dataframe but got {type(X)} instead.'
+    assert self.column_name in X.columns.to_list(), f'unknown column {self.column_name}'
+    assert all([isinstance(v, (int, float)) for v in X[self.column_name].to_list()])
+
+    transformed_df_ = transformed_df.copy()
+
+    fig, ax = plt.subplots(1,1, figsize=(3,9))
+    X.boxplot(self.column_name, vert=True, ax=ax, grid=True)  #normal boxplot
+    q1 = X[self.column_name].quantile(0.25)
+    q3 = X[self.column_name].quantile(0.75)
+    iqr = q3-q1
+    if(self.fence == 'inner'):
+      inner_low = q1-1.5*iqr
+      inner_high = q3+1.5*iqr
+      ax.scatter(1, inner_low, c='red', label='inner_low', marker="D", linewidths=5)
+      ax.text(1.1,  inner_low, "Inner fence")
+      ax.scatter(1, inner_high, c='red', label='inner_high', marker="D", linewidths=5)
+      ax.text(1.1,  inner_high, "Inner fence")
+      transformed_df_[self.column_name] = X[self.column_name].clip(lower=inner_low, upper=inner_high)
+    elif(self.fence == 'outer'):
+      outer_low = q1-3*iqr
+      outer_high = q3+3*iqr
+      ax.scatter(1, outer_low, c='red', label='outer_low', marker="D", linewidths=5)
+      ax.text(1.1,  outer_low, "Outer fence")
+      ax.scatter(1, outer_high, c='red', label='outer_high', marker="D", linewidths=5)
+      ax.text(1.1,  outer_high, "Outer fence")
+      transformed_df_[self.column_name] = X[self.column_name].clip(lower=outer_low, upper=outer_high)
+
+    fig.show()
+    return transformed_df_
+
+  def fit_transform(self, X, y = None):
+    result = self.transform(X)
+    return result
