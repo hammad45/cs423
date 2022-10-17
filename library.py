@@ -164,3 +164,31 @@ class PearsonTransformer(BaseEstimator, TransformerMixin):
     result = self.transform(X)
     return result
   
+class Sigma3Transformer(BaseEstimator, TransformerMixin):
+  def __init__(self, column_name):
+    assert isinstance(column_name, str), f'{self.__class__.__name__} constructor expected string but got {type(column_name)} instead.'
+    self.column_name = column_name
+
+  def fit(self, X, y = None):
+    print(f"\nWarning: {self.__class__.__name__}.fit does nothing.\n")
+    return X
+
+  def transform(self, X):
+    assert isinstance(X, pd.core.frame.DataFrame), f'{self.__class__.__name__}.transform expected Dataframe but got {type(X)} instead.'
+    assert self.column_name in X.columns.to_list(), f'unknown column {self.column_name}'
+    assert all([isinstance(v, (int, float)) for v in X[self.column_name].to_list()])
+
+    #your code below
+    m = X[self.column_name].mean()
+    sig = X[self.column_name].std()
+    s3max = m + 3 * sig
+    s3min = m - 3 * sig
+
+    transformed_df_ = transformed_df.copy()
+    transformed_df_[self.column_name] = X[self.column_name].clip(lower=s3min, upper=s3max)
+
+    return transformed_df_
+
+  def fit_transform(self, X, y = None):
+    result = self.transform(X)
+    return result
