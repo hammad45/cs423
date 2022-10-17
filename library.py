@@ -33,7 +33,8 @@ class MappingTransformer(BaseEstimator, TransformerMixin):
     X_[self.mapping_column].replace(self.mapping_dict, inplace=True)
     return X_
 
-class PearsonTransformer(BaseEstimator, TransformerMixin):  
+class PearsonTransformer(BaseEstimator, TransformerMixin): 
+  
   def __init__(self, threshold):
     assert isinstance(threshold, float), f'{self.__class__.__name__} constructor expected float but got {type(threshold)} instead.'
     self.threshold = threshold
@@ -67,6 +68,7 @@ class PearsonTransformer(BaseEstimator, TransformerMixin):
     return result
   
 class RenamingTransformer(BaseEstimator, TransformerMixin):
+  
     def __init__(self, mapping_dict:dict):
       assert isinstance(mapping_dict, dict), f'{self.__class__.__name__} constructor expected dictionary but got {type(mapping_dict)} instead.'
       self.mapping_dict = mapping_dict
