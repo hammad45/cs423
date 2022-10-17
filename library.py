@@ -34,31 +34,32 @@ class MappingTransformer(BaseEstimator, TransformerMixin):
     return X_
 
 class RenamingTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, mapping_dict:dict):
-      assert isinstance(mapping_dict, dict), f'{self.__class__.__name__} constructor expected dictionary but got {type(mapping_dict)} instead.'
-      self.mapping_dict = mapping_dict
 
-    def fit(self, X, y = None):
-      print(f"\nWarning: {self.__class__.__name__}.fit does nothing.\n")
-      return X
+  def __init__(self, mapping_dict:dict):
+    assert isinstance(mapping_dict, dict), f'{self.__class__.__name__} constructor expected dictionary but got {type(mapping_dict)} instead.'
+    self.mapping_dict = mapping_dict
 
-    def transform(self, X):
-      assert isinstance(X, pd.core.frame.DataFrame), f'{self.__class__.__name__}.transform expected Dataframe but got {type(X)} instead.'
+  def fit(self, X, y = None):
+    print(f"\nWarning: {self.__class__.__name__}.fit does nothing.\n")
+    return X
 
-      keys = set(self.mapping_dict.keys())
-      cols = set(X.columns.to_list())
-      diff = keys - cols
-      print(diff)
+  def transform(self, X):
+    assert isinstance(X, pd.core.frame.DataFrame), f'{self.__class__.__name__}.transform expected Dataframe but got {type(X)} instead.'
 
-      assert len(diff) == 0 , f'{self.__class__.__name__}.transform unknown column "{diff}"'  #column legit?
-      X_ = X.copy()
-      X_.rename(columns=self.mapping_dict, inplace=True)
-      return X_
-     
-    def fit_transform(self, X, y = None):
-      result = self.transform(X)
-      return result
-    
+    keys = set(self.mapping_dict.keys())
+    cols = set(X.columns.to_list())
+    diff = keys - cols
+    print(diff)
+
+    assert len(diff) == 0 , f'{self.__class__.__name__}.transform unknown column "{diff}"'  #column legit?
+    X_ = X.copy()
+    X_.rename(columns=self.mapping_dict, inplace=True)
+    return X_
+
+  def fit_transform(self, X, y = None):
+    result = self.transform(X)
+    return result
+
 class OHETransformer(BaseEstimator, TransformerMixin):
   def __init__(self, target_column, dummy_na=False, drop_first=False):  
     assert isinstance(target_column, str), f'{self.__class__.__name__} constructor expected string but got {type(target_column)} instead.'
