@@ -211,7 +211,7 @@ class TukeyTransformer(BaseEstimator, TransformerMixin):
     assert self.target_column in X.columns.to_list(), f'unknown column {self.target_column}'
     assert all([isinstance(v, (int, float)) for v in X[self.target_column].to_list()])
 
-    transformed_df_ = transformed_df.copy()
+    X_ = X.copy()
 
     fig, ax = plt.subplots(1,1, figsize=(3,9))
     X.boxplot(self.target_column, vert=True, ax=ax, grid=True)  #normal boxplot
@@ -225,7 +225,7 @@ class TukeyTransformer(BaseEstimator, TransformerMixin):
       ax.text(1.1,  inner_low, "Inner fence")
       ax.scatter(1, inner_high, c='red', label='inner_high', marker="D", linewidths=5)
       ax.text(1.1,  inner_high, "Inner fence")
-      transformed_df_[self.target_column] = X[self.target_column].clip(lower=inner_low, upper=inner_high)
+      X_[self.target_column] = X[self.target_column].clip(lower=inner_low, upper=inner_high)
     elif(self.fence == 'outer'):
       outer_low = q1-3*iqr
       outer_high = q3+3*iqr
@@ -233,10 +233,10 @@ class TukeyTransformer(BaseEstimator, TransformerMixin):
       ax.text(1.1,  outer_low, "Outer fence")
       ax.scatter(1, outer_high, c='red', label='outer_high', marker="D", linewidths=5)
       ax.text(1.1,  outer_high, "Outer fence")
-      transformed_df_[self.target_column] = X[self.target_column].clip(lower=outer_low, upper=outer_high)
+      X_[self.target_column] = X[self.target_column].clip(lower=outer_low, upper=outer_high)
 
     fig.show()
-    return transformed_df_
+    return X_
 
   def fit_transform(self, X, y = None):
     result = self.transform(X)
