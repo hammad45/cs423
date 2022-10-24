@@ -236,7 +236,7 @@ class TukeyTransformer(BaseEstimator, TransformerMixin):
       ax.text(1.1,  outer_high, "Outer fence")
       X_[self.target_column] = X[self.target_column].clip(lower=outer_low, upper=outer_high)
 
-    fig.show()
+#     fig.show()
     return X_
 
   def fit_transform(self, X, y = None):
