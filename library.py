@@ -1,9 +1,12 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
-import matplotlib.pyplot as plt
+from sklearn.metrics import f1_score
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
 
 class MappingTransformer(BaseEstimator, TransformerMixin):
   
@@ -296,3 +299,24 @@ class KNNTransformer(BaseEstimator, TransformerMixin):
   def fit_transform(self, X, y = None):
     result = self.transform(X)
     return result
+
+def find_random_state(features_df, labels, n=200):
+  model = KNeighborsClassifier(n_neighbors=5)
+
+  var = []  #collect test_error/train_error where error based on F1 score
+
+  #2 minutes
+  for i in range(1, n):
+      train_X, test_X, train_y, test_y = train_test_split(features_df, labels, test_size=0.2, shuffle=True,
+                                                      random_state=i, stratify=labels)
+      model.fit(train_X, train_y)  #train model
+      train_pred = model.predict(train_X)           #predict against training set
+      test_pred = model.predict(test_X)             #predict against test set
+      train_f1 = f1_score(train_y, train_pred)   #F1 on training predictions
+      test_f1 = f1_score(test_y, test_pred)      #F1 on test predictions
+      f1_ratio = test_f1/train_f1          #take the ratio
+      var.append(f1_ratio)
+
+  rs_value = sum(var)/len(var)  #get average ratio value
+  idx = np.array(abs(var - rs_value)).argmin()  #find the index of the smallest value
+  return idx
