@@ -7,9 +7,10 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 
-class MappingTransformer(BaseEstimator, TransformerMixin):
-  
+
+class MappingTransformer(BaseEstimator, TransformerMixin):  
   def __init__(self, mapping_column, mapping_dict:dict):
     assert isinstance(mapping_dict, dict), f'{self.__class__.__name__} constructor expected dictionary but got {type(mapping_dict)} instead.'
     self.mapping_dict = mapping_dict
@@ -44,7 +45,6 @@ class MappingTransformer(BaseEstimator, TransformerMixin):
 
 
 class RenamingTransformer(BaseEstimator, TransformerMixin):
-
   def __init__(self, mapping_dict:dict):
     assert isinstance(mapping_dict, dict), f'{self.__class__.__name__} constructor expected dictionary but got {type(mapping_dict)} instead.'
     self.mapping_dict = mapping_dict
@@ -70,6 +70,7 @@ class RenamingTransformer(BaseEstimator, TransformerMixin):
     result = self.transform(X)
     return result
 
+  
 class OHETransformer(BaseEstimator, TransformerMixin):
   def __init__(self, target_column, dummy_na=False, drop_first=False):  
     assert isinstance(target_column, str), f'{self.__class__.__name__} constructor expected string but got {type(target_column)} instead.'
@@ -169,6 +170,7 @@ class PearsonTransformer(BaseEstimator, TransformerMixin):
     result = self.transform(X)
     return result
   
+  
 class Sigma3Transformer(BaseEstimator, TransformerMixin):
   def __init__(self, column_name):
     assert isinstance(column_name, str), f'{self.__class__.__name__} constructor expected string but got {type(column_name)} instead.'
@@ -217,35 +219,25 @@ class TukeyTransformer(BaseEstimator, TransformerMixin):
 
     X_ = X.copy()
 
-#     fig, ax = plt.subplots(1,1, figsize=(3,9))
-#     X.boxplot(self.target_column, vert=True, ax=ax, grid=True)  #normal boxplot
     q1 = X[self.target_column].quantile(0.25)
     q3 = X[self.target_column].quantile(0.75)
     iqr = q3-q1
     if(self.fence == 'inner'):
       inner_low = q1-1.5*iqr
       inner_high = q3+1.5*iqr
-#       ax.scatter(1, inner_low, c='red', label='inner_low', marker="D", linewidths=5)
-#       ax.text(1.1,  inner_low, "Inner fence")
-#       ax.scatter(1, inner_high, c='red', label='inner_high', marker="D", linewidths=5)
-#       ax.text(1.1,  inner_high, "Inner fence")
       X_[self.target_column] = X[self.target_column].clip(lower=inner_low, upper=inner_high)
     elif(self.fence == 'outer'):
       outer_low = q1-3*iqr
       outer_high = q3+3*iqr
-#       ax.scatter(1, outer_low, c='red', label='outer_low', marker="D", linewidths=5)
-#       ax.text(1.1,  outer_low, "Outer fence")
-#       ax.scatter(1, outer_high, c='red', label='outer_high', marker="D", linewidths=5)
-#       ax.text(1.1,  outer_high, "Outer fence")
       X_[self.target_column] = X[self.target_column].clip(lower=outer_low, upper=outer_high)
 
-#     fig.show()
     return X_
 
   def fit_transform(self, X, y = None):
     result = self.transform(X)
     return result
 
+  
 class MinMaxTransformer(BaseEstimator, TransformerMixin):
   def __init__(self):
     pass  #takes no arguments
@@ -268,6 +260,7 @@ class MinMaxTransformer(BaseEstimator, TransformerMixin):
   def fit_transform(self, X, y = None):
     result = self.transform(X)
     return result
+  
   
 class KNNTransformer(BaseEstimator, TransformerMixin):
   def __init__(self,n_neighbors=5, weights="uniform"):
@@ -300,6 +293,7 @@ class KNNTransformer(BaseEstimator, TransformerMixin):
     result = self.transform(X)
     return result
 
+  
 def find_random_state(features_df, labels, n=200):
   model = KNeighborsClassifier(n_neighbors=5)
   var = [] 
@@ -317,6 +311,7 @@ def find_random_state(features_df, labels, n=200):
   rs_value = sum(var)/len(var) 
   idx = np.array(abs(var - rs_value)).argmin() 
   return idx
+
 
 def dataset_setup(full_table, label_column_name:str, the_transformer, rs, ts=.2):
   #your code below
@@ -338,6 +333,7 @@ def dataset_setup(full_table, label_column_name:str, the_transformer, rs, ts=.2)
 
   return x_trained_numpy, x_test_numpy, y_train_numpy,  y_test_numpy 
 
+
 titanic_transformer = Pipeline(steps=[
     ('drop', DropColumnsTransformer(['Age', 'Gender', 'Class', 'Joined', 'Married',  'Fare'], 'keep')),
     ('gender', MappingTransformer('Gender', {'Male': 0, 'Female': 1})),
@@ -355,6 +351,7 @@ def titanic_setup(titanic_table, transformer=titanic_transformer, rs=40, ts=.2):
                                                                            rs, ts)
   return x_trained_numpy, x_test_numpy, y_train_numpy,  y_test_numpy
 
+
 customer_transformer = Pipeline(steps=[
     ('id', DropColumnsTransformer(column_list=['ID'])),
     ('os', OHETransformer(target_column='OS')),
@@ -371,3 +368,28 @@ def customer_setup(customer_table, transformer=customer_transformer, rs=76, ts=.
                                                                            transformer,
                                                                            rs, ts)
   return x_trained_numpy, x_test_numpy, y_train_numpy,  y_test_numpy
+
+
+def threshold_results(thresh_list, actuals, predicted):
+  result_df = pd.DataFrame(columns=['threshold', 'precision', 'recall', 'f1', 'accuracy'])
+  for t in thresh_list:
+    yhat = [1 if v >=t else 0 for v in predicted]
+    #note: where TP=0, the Precision and Recall both become 0
+    precision = precision_score(actuals, yhat, zero_division=0)
+    recall = recall_score(actuals, yhat, zero_division=0)
+    f1 = f1_score(actuals, yhat)
+    accuracy = accuracy_score(actuals, yhat)
+    result_df.loc[len(result_df)] = {'threshold':t, 'precision':precision, 'recall':recall, 'f1':f1, 'accuracy':accuracy}
+
+  result_df = result_df.round(2)
+
+  #Next bit fancies up table for printing. See https://betterdatascience.com/style-pandas-dataframes/
+  #Note that fancy_df is not really a dataframe. More like a printable object.
+  headers = {
+    "selector": "th:not(.index_name)",
+    "props": "background-color: #800000; color: white; text-align: center"
+  }
+  properties = {"border": "1px solid black", "width": "65px", "text-align": "center"}
+
+  fancy_df = result_df.style.format(precision=2).set_properties(**properties).set_table_styles([headers])
+  return (result_df, fancy_df)
